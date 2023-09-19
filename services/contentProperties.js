@@ -1,12 +1,25 @@
-const video_info = require("../database/models/video_info");
+const { getOneDocument, insertNewDocument, updateOneDocument, deleteOneDocument } = require("../database/utilities/index")
 
 async function getContentProperties(req, res) {
+    const requestedProperties = req.query.properties;
+    console.log(requestedProperties);
     const id = req.params["id"];
+
     try {
-        const data = await  video_info.findOne({ ContentID: id });
+        const data = await getOneDocument("video_model", { ContentID: id });
+        let custom_data = {};
         if (data) {
-            // console.log(data)
-            res.status(200).json({ data, "user": req.session.userId, "role": req.session.role })
+            if (requestedProperties !== undefined) {
+                const requestedPropertiesList = requestedProperties.split(",");
+                for (const key of requestedPropertiesList) {
+                    if (key in data)
+                        custom_data[key] = data[key];
+                }
+            }
+            else {
+                custom_data = data;
+            }
+            res.status(200).json({ "data": custom_data, "user": req.session.userId, "role": req.session.role })
             return;
         }
         else {
@@ -14,10 +27,13 @@ async function getContentProperties(req, res) {
             return;
         }
     } catch (error) {
+        console.log(error);
         res.status(500).json("Internal Server Error")
         return;
     }
 }
+
+
 
 async function createContentProperties(req, res) {
     if (req.session.role != "admin") {
@@ -26,10 +42,9 @@ async function createContentProperties(req, res) {
     }
     const data = req.body;
     try {
-        data["LastUpdatedBy"]=req.session.userId;
-        data["LastUpdated"]=Date.now();
-        const newJob = new  video_info(data);
-        await newJob.save();
+        data["LastUpdatedBy"] = req.session.userId;
+        data["LastUpdated"] = Date.now();
+        await insertNewDocument("video_model", data);
         console.log("Saved Successfully...");
         res.status(200).json("Data Inserted Successfully");
         return
@@ -46,13 +61,35 @@ async function updateContentProperties(req, res) {
         return;
     }
     const data = req.body;
+
     try {
-        data.new_data["LastUpdatedBy"]=req.session.userId;
+        data.new_data["LastUpdatedBy"] = req.session.userId;
         data.new_data["LastUpdated"] = Date.now();
-        console.log(data)
-        const update_data = await  video_info.findOneAndUpdate({ ContentID: data.ContentID }, { $set: data.new_data }, { new: true });
+        const update_data = await updateOneDocument("video_model", { ContentID: data.ContentID }, data.new_data);
         console.log("Updated Successfully...");
         res.status(200).json(update_data);
+        return
+    } catch (error) {
+        console.log(error)
+        res.status(500).json("Internal Server Error")
+        return
+    }
+}
+
+
+async function deleteContentProperties(req, res) {
+    if (req.session.role !== "admin") {
+        res.status(401).json("Unauthorized");
+        return;
+    }
+    const data = req.body;
+    if (!("ContentID" in data)) {
+        return res.status(400).json("Invalid Body");
+    }
+    try {
+        await deleteOneDocument("video_model", data)
+        console.log("Deleted Successfully...");
+        res.status(200).json(`Content ID ${data["ContentID"]} Deleted Successfully`);
         return
     } catch (error) {
         console.log(error)
@@ -65,4 +102,5 @@ module.exports = {
     getContentProperties,
     createContentProperties,
     updateContentProperties,
+    deleteContentProperties,
 };

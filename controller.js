@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt");
-const loginModel = require("./database/models/loginModel");
+const {getOneDocument} = require("./database/utilities/index")
 const allowed_services = require("./user_services")
 
 
@@ -18,7 +18,7 @@ async function login(req, res) {
     const [username, password] = decodedCredentials.split(":");
 
     try {
-        const user = await  loginModel.findOne({ username: username });
+        const user = await getOneDocument("login_model",{ username: username });
 
         if (!user) {
             return res.status(401).json({ message: "Invalid username or password" });
