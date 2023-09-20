@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const {db_connection} = require("../database");
 const video_info_schema = new mongoose.Schema({
-    ContentID: { type: String, unique: true, required: true },
+    ContentID: { type: String, unique: true, required: true,unmodifiable: true},
     SubTitle: { type: String },
     AudioTrack: { type: String, required: true },
     Dash:

@@ -8,6 +8,9 @@ const getOneDocument = async (model_name,queryObj)=>{
    return await Models[model_name].findOne(queryObj).exec();
 }
 
+const getOneCustomDocument= async (model_name,queryObj,required_fields)=>{
+    return await Models[model_name].findOne(queryObj).select(required_fields).exec();
+ }
 
 const insertNewDocument = async(model_name,newObj)=>{
    let new_doc = new Models[model_name](newObj);
@@ -20,7 +23,7 @@ const updateOneDocument = async (model_name,updateQuery,setQuery)=>{
 
 
 const deleteOneDocument = async (model_name,deleteQuery)=>{
-    return await Models[model_name].deleteOne(deleteQuery);
+    return await Models[model_name].findOneAndDelete(deleteQuery);
 }
 
-module.exports={getOneDocument,insertNewDocument,updateOneDocument,deleteOneDocument};
+module.exports={getOneDocument,getOneCustomDocument,insertNewDocument,updateOneDocument,deleteOneDocument};
